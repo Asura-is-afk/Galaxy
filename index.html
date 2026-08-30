@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Bhumi's Challenge ✨</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #030014;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      color: #fff;
+      overflow-x: hidden;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      user-select: none;
+    }
+
+    /* Animated Cyberpunk Background Glow */
+    .bg-glow {
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(circle at 50% 50%, #1e1b4b 0%, #030014 100%);
+      z-index: -1;
+    }
+
+    /* Glassmorphism Card Container */
+    .quiz-card {
+      width: 90%;
+      max-width: 480px;
+      background: rgba(15, 23, 42, 0.75);
+      border: 1px solid rgba(168, 85, 247, 0.3);
+      backdrop-filter: blur(16px);
+      border-radius: 24px;
+      padding: 30px;
+      box-shadow: 0 0 50px rgba(168, 85, 247, 0.15);
+      text-align: center;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 6px 16px;
+      background: rgba(168, 85, 247, 0.15);
+      border: 1px solid #c084fc;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      letter-spacing: 2px;
+      color: #c084fc;
+      margin-bottom: 16px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    h2 {
+      font-size: 1.3rem;
+      font-weight: 500;
+      margin-bottom: 24px;
+      color: #f3e8ff;
+      line-height: 1.4;
+    }
+
+    .options-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .option-btn {
+      padding: 14px 20px;
+      background: rgba(30, 41, 59, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 14px;
+      color: #e2e8f0;
+      font-size: 0.95rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-align: left;
+    }
+
+    .option-btn:hover {
+      background: rgba(168, 85, 247, 0.2);
+      border-color: #c084fc;
+      transform: translateY(-2px);
+    }
+
+    .option-btn:active {
+      transform: translateY(0);
+    }
+
+    /* Progress Bar */
+    .progress-box {
+      width: 100%;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      width: 20%;
+      height: 100%;
+      background: linear-gradient(90deg, #c084fc, #38bdf8);
+      border-radius: 4px;
+      transition: width 0.3s ease;
+    }
+
+    /* Shake Animation for Wrong Answers */
+    .shake {
+      animation: shake 0.4s ease-in-out;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-8px); }
+      40%, 80% { transform: translateX(8px); }
+    }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+
+<div class="bg-glow"></div>
+
+<!-- STAGE 1: PHYSICS QUIZ CONTAINER -->
+<div id="stage1" class="quiz-card">
+  <div class="badge" id="quiz-badge">Question 1 / 5</div>
+  <h2 id="question-text">Loading question...</h2>
+  
+  <div class="options-grid" id="options-container"></div>
+  
+  <div class="progress-box">
+    <div class="progress-bar" id="progress-fill"></div>
+  </div>
+</div>
+
+<script>
+  // Class 11 Physics Questions Data
+  const physicsQuestions = [
+    {
+      q: "If displacement of a body is zero, what can you say about its distance covered?",
+      options: ["Must be zero", "Cannot be zero", "May or may not be zero", "It's negative"],
+      answer: 2
+    },
+    {
+      q: "What is the angle between two vectors for their resultant to be maximum?",
+      options: ["0°", "90°", "180°", "45°"],
+      answer: 0
+    },
+    {
+      q: "Area under a Force-Time (F-t) graph represents which physical quantity?",
+      options: ["Work Done", "Impulse", "Power", "Acceleration"],
+      answer: 1
+    },
+    {
+      q: "What is the work done by centripetal force on a body moving in a circle?",
+      options: ["Maximum", "Negative", "Zero", "Infinite"],
+      answer: 2
+    },
+    {
+      q: "Which property of a body opposes any change in its state of rest or motion?",
+      options: ["Momentum", "Inertia", "Velocity", "Friction"],
+      answer: 1
+    }
+  ];
+
+  let currentQ = 0;
+
+  function loadQuestion() {
+    const qData = physicsQuestions[currentQ];
+    document.getElementById('quiz-badge').innerText = `Physics Test: Question ${currentQ + 1} / 5`;
+    document.getElementById('question-text').innerText = qData.q;
+    
+    const optionsContainer = document.getElementById('options-container');
+    optionsContainer.innerHTML = '';
+
+    qData.options.forEach((opt, idx) => {
+      const btn = document.createElement('button');
+      btn.className = 'option-btn';
+      btn.innerText = `${String.fromCharCode(65 + idx)}. ${opt}`;
+      btn.onclick = () => checkAnswer(idx);
+      optionsContainer.appendChild(btn);
+    });
+
+    document.getElementById('progress-fill').style.width = `${((currentQ + 1) / 5) * 100}%`;
+  }
+
+  function checkAnswer(selectedIdx) {
+    const qData = physicsQuestions[currentQ];
+    const card = document.getElementById('stage1');
+
+    if (selectedIdx === qData.answer) {
+      currentQ++;
+      if (currentQ < physicsQuestions.length) {
+        loadQuestion();
+      } else {
+        // Quiz Complete -> Fade out Stage 1 & launch Stage 2
+        card.style.opacity = '0';
+        card.style.transform = 'scale(0.9)';
+        setTimeout(() => {
+          card.style.display = 'none';
+          if (typeof initStage2 === 'function') {
+            initStage2();
+          }
+        }, 400);
+      }
+    } else {
+      // Wrong answer feedback
+      card.classList.add('shake');
+      setTimeout(() => card.classList.remove('shake'), 400);
+    }
+  }
+
+  // Start Stage 1 on load
+  window.onload = loadQuestion;
+</script>
+<!-- STAGE 2: 360 PARTICLE UNIVERSE CONTAINER -->
+<div id="stage2" style="display: none; position: fixed; inset: 0; z-index: 10;">
+  <div id="canvas-container" style="width: 100vw; height: 100vh; position: absolute; top: 0; left: 0;"></div>
+  
+  <!-- In-Galaxy Enter Button -->
+  <div style="position: absolute; bottom: 45px; left: 50%; transform: translateX(-50%); z-index: 20; text-align: center;">
+    <button onclick="openSecretModal()" style="
+      padding: 18px 40px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      font-family: 'Segoe UI', sans-serif;
+      letter-spacing: 2px;
+      color: #030014;
+      background: linear-gradient(90deg, #38bdf8, #c084fc, #f472b6);
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      box-shadow: 0 0 35px rgba(192, 132, 252, 0.7);
+      transition: transform 0.2s;
+    " onmouseover="this.style.transform='scale(1.08)'" onmouseout="this.style.transform='scale(1)'">
+      💥 ENTER ARENA 💥
+    </button>
+  </div>
+
+  <!-- Secret Modal Pop-up -->
+  <div id="secret-modal" style="
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 30;
+    background: rgba(3, 0, 20, 0.85);
+    backdrop-filter: blur(12px);
+    justify-content: center;
+    align-items: center;
+  ">
+    <div style="
+      width: 90%;
+      max-width: 400px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(192, 132, 252, 0.4);
+      border-radius: 24px;
+      padding: 30px;
+      text-align: center;
+      box-shadow: 0 0 50px rgba(192, 132, 252, 0.3);
+    ">
+      <h2 style="color: #f3e8ff; font-size: 1.4rem; margin-bottom: 12px;">FINAL VERIFICATION 🔍</h2>
+      <p style="color: #c084fc; font-size: 1rem; margin-bottom: 24px;">What is Bhumi?</p>
+      
+      <div style="display: flex; gap: 15px; justify-content: center; margin-bottom: 20px;">
+        <button id="btn-cute" class="puzzle-btn" style="
+          flex: 1; padding: 14px; font-weight: bold; border-radius: 14px;
+          border: 1px solid #f472b6; background: rgba(244, 114, 182, 0.15); color: #f472b6; cursor: pointer;
+        ">CUTE 💖</button>
+        
+        <button id="btn-pagal" class="puzzle-btn" style="
+          flex: 1; padding: 14px; font-weight: bold; border-radius: 14px;
+          border: 1px solid #38bdf8; background: rgba(56, 189, 248, 0.15); color: #38bdf8; cursor: pointer;
+        ">PAGAL 🤪</button>
+      </div>
+
+      <p id="puzzle-hint" style="color: #94a3b8; font-size: 0.8rem; height: 18px;"></p>
+    </div>
+  </div>
+</div>
+
+<script>
+  let scene2, camera2, renderer2, galaxyGroup;
+  let isDragging2 = false;
+  let previousMousePosition2 = { x: 0, y: 0 };
+  let targetRotationX2 = 0.2, targetRotationY2 = 0;
+
+  let isCutePressed = false;
+  let isPagalPressed = false;
+
+  function createGlowParticleTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 64; canvas.height = 64;
+    const ctx = canvas.getContext('2d');
+    const grad = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+    grad.addColorStop(0, 'rgba(255, 255, 255, 1)');
+    grad.addColorStop(0.2, 'rgba(192, 132, 252, 0.9)');
+    grad.addColorStop(0.6, 'rgba(56, 189, 248, 0.4)');
+    grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 64, 64);
+    return new THREE.CanvasTexture(canvas);
+  }
+
+  function initStage2() {
+    document.getElementById('stage2').style.display = 'block';
+
+    const container = document.getElementById('canvas-container');
+    scene2 = new THREE.Scene();
+    scene2.fog = new THREE.FogExp2(0x030014, 0.01);
+
+    camera2 = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera2.position.set(0, 4, 28);
+
+    renderer2 = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer2.setSize(window.innerWidth, window.innerHeight);
+    renderer2.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    container.appendChild(renderer2.domElement);
+
+    galaxyGroup = new THREE.Group();
+    scene2.add(galaxyGroup);
+
+    // Deep Glowing Core
+    const coreMat = new THREE.MeshBasicMaterial({ color: 0xc084fc, wireframe: true, transparent: true, opacity: 0.3 });
+    const coreMesh = new THREE.Mesh(new THREE.IcosahedronGeometry(4, 2), coreMat);
+    galaxyGroup.add(coreMesh);
+
+    // 360 Particle Galaxy Stars (4,500 points)
+    const particleCount = 4500;
+    const pGeo = new THREE.BufferGeometry();
+    const pPos = new Float32Array(particleCount * 3);
+    const pColors = new Float32Array(particleCount * 3);
+
+    for (let i = 0; i < particleCount; i++) {
+      const radius = 5 + Math.random() * 28;
+      const theta = Math.random() * Math.PI * 2;
+      const phi = (Math.random() - 0.5) * Math.PI;
+
+      pPos[i * 3] = radius * Math.sin(theta) * Math.cos(phi);
+      pPos[i * 3 + 1] = radius * Math.sin(phi);
+      pPos[i * 3 + 2] = radius * Math.cos(theta) * Math.cos(phi);
+
+      pColors[i * 3] = 0.5 + Math.random() * 0.5;     // R
+      pColors[i * 3 + 1] = 0.4 + Math.random() * 0.5; // G
+      pColors[i * 3 + 2] = 1.0;                         // B
+    }
+
+    pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+    pGeo.setAttribute('color', new THREE.BufferAttribute(pColors, 3));
+
+    const pMat = new THREE.PointsMaterial({
+      size: 0.6,
+      map: createGlowParticleTexture(),
+      vertexColors: true,
+      transparent: true,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false
+    });
+
+    const starfield = new THREE.Points(pGeo, pMat);
+    galaxyGroup.add(starfield);
+
+    // Touch & Mouse 360 Controls
+    window.addEventListener('mousedown', (e) => { isDragging2 = true; previousMousePosition2 = { x: e.clientX, y: e.clientY }; });
+    window.addEventListener('mouseup', () => isDragging2 = false);
+    window.addEventListener('mousemove', onStage2PointerMove);
+
+    window.addEventListener('touchstart', (e) => {
+      if (e.touches.length === 1) {
+        isDragging2 = true;
+        previousMousePosition2 = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      }
+    });
+    window.addEventListener('touchend', () => isDragging2 = false);
+    window.addEventListener('touchmove', onStage2PointerMove);
+
+    setupDualButtonLogic();
+    animateStage2();
+  }
+
+  function onStage2PointerMove(e) {
+    if (!isDragging2) return;
+
+    let clientX = e.clientX || (e.touches && e.touches[0].clientX);
+    let clientY = e.clientY || (e.touches && e.touches[0].clientY);
+
+    if (clientX && clientY) {
+      const deltaX = clientX - previousMousePosition2.x;
+      const deltaY = clientY - previousMousePosition2.y;
+
+      targetRotationY2 += deltaX * 0.005;
+      targetRotationX2 += deltaY * 0.005;
+
+      previousMousePosition2 = { x: clientX, y: clientY };
+    }
+  }
+
+  function animateStage2() {
+    if (document.getElementById('stage2').style.display === 'none') return;
+    requestAnimationFrame(animateStage2);
+
+    galaxyGroup.rotation.y += (targetRotationY2 - galaxyGroup.rotation.y) * 0.05;
+    galaxyGroup.rotation.x += (targetRotationX2 - galaxyGroup.rotation.x) * 0.05;
+    galaxyGroup.rotation.y += 0.002;
+
+    renderer2.render(scene2, camera2);
+  }
+
+  function openSecretModal() {
+    document.getElementById('secret-modal').style.display = 'flex';
+  }
+
+  // Multi-Touch Dual Button Verification Logic
+  function setupDualButtonLogic() {
+    const btnCute = document.getElementById('btn-cute');
+    const btnPagal = document.getElementById('btn-pagal');
+    const hint = document.getElementById('puzzle-hint');
+
+    const pressCute = (e) => { e.preventDefault(); isCutePressed = true; checkDualPress(); };
+    const releaseCute = () => { isCutePressed = false; };
+
+    const pressPagal = (e) => { e.preventDefault(); isPagalPressed = true; checkDualPress(); };
+    const releasePagal = () => { isPagalPressed = false; };
+
+    btnCute.addEventListener('touchstart', pressCute);
+    btnCute.addEventListener('touchend', releaseCute);
+    btnCute.addEventListener('mousedown', pressCute);
+    btnCute.addEventListener('mouseup', releaseCute);
+
+    btnPagal.addEventListener('touchstart', pressPagal);
+    btnPagal.addEventListener('touchend', releasePagal);
+    btnPagal.addEventListener('mousedown', pressPagal);
+    btnPagal.addEventListener('mouseup', releasePagal);
+  }
+
+  function checkDualPress() {
+    const hint = document.getElementById('puzzle-hint');
+
+    if (isCutePressed && isPagalPressed) {
+      hint.style.color = '#34d399';
+      hint.innerText = "ACCESS GRANTED! 🎉";
+      setTimeout(() => {
+        document.getElementById('stage2').style.display = 'none';
+        if (typeof initStage3 === 'function') {
+          initStage3();
+        }
+      }, 500);
+    } else {
+      hint.style.color = '#f472b6';
+      hint.innerText = "Access Denied! She is BOTH! Press both together 😜";
+    }
+  }
+</script>
+<!-- STAGE 3: RAJNI ZOMBIE SHOOTER CONTAINER -->
+<div id="stage3" style="display: none; position: fixed; inset: 0; z-index: 10; background: #050508;">
+  
+  <!-- Score & Health UI Header -->
+  <div style="
+    position: absolute; top: 15px; left: 0; right: 0;
+    display: flex; justify-content: space-between; padding: 0 25px;
+    z-index: 20; font-family: 'Segoe UI', sans-serif; pointer-events: none;
+  ">
+    <div style="color: #38bdf8; font-weight: bold; font-size: 1.1rem; text-shadow: 0 0 10px #38bdf8;">
+      SCORE: <span id="score-val">0</span> / 15
+    </div>
+    <div style="color: #f472b6; font-weight: bold; font-size: 1.1rem; text-shadow: 0 0 10px #f472b6;">
+      HP: <span id="hp-val">❤️❤️❤️</span>
+    </div>
+  </div>
+
+  <canvas id="shooterCanvas" style="width: 100vw; height: 100vh; display: block; cursor: crosshair;"></canvas>
+
+  <!-- Victory / Game Over Overlay -->
+  <div id="game-over-modal" style="
+    display: none; position: fixed; inset: 0; z-index: 30;
+    background: rgba(3, 0, 20, 0.9); backdrop-filter: blur(14px);
+    justify-content: center; align-items: center; text-align: center;
+  ">
+    <div style="
+      width: 90%; max-width: 420px; background: rgba(15, 23, 42, 0.95);
+      border: 2px solid #34d399; border-radius: 24px; padding: 32px;
+      box-shadow: 0 0 50px rgba(52, 211, 153, 0.4);
+    ">
+      <h1 id="win-title" style="color: #34d399; font-size: 2rem; margin-bottom: 10px;">VICTORY! 🏆</h1>
+      <p id="win-desc" style="color: #f3e8ff; font-size: 1rem; margin-bottom: 24px; line-height: 1.5;">
+        Bhumi successfully defeated all the Rajni Zombies! Undisputed Champion of the Universe ✨
+      </p>
+      <button onclick="restartGame()" style="
+        padding: 14px 32px; font-weight: bold; border-radius: 50px;
+        border: none; background: linear-gradient(90deg, #34d399, #38bdf8);
+        color: #030014; font-size: 1rem; cursor: pointer; box-shadow: 0 0 20px rgba(52, 211, 153, 0.5);
+      ">PLAY AGAIN 🔄</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let canvas, ctx;
+  let player, bullets = [], zombies = [], particles3 = [];
+  let score = 0, hp = 3;
+  let gameActive = false;
+  let spawnTimer;
+
+  function initStage3() {
+    document.getElementById('stage3').style.display = 'block';
+    canvas = document.getElementById('shooterCanvas');
+    ctx = canvas.getContext('2d');
+
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    player = {
+      x: canvas.width / 2,
+      y: canvas.height - 70,
+      width: 40,
+      height: 40,
+      color: '#c084fc'
+    };
+
+    score = 0;
+    hp = 3;
+    bullets = [];
+    zombies = [];
+    particles3 = [];
+    gameActive = true;
+
+    document.getElementById('score-val').innerText = score;
+    document.getElementById('hp-val').innerText = '❤️❤️❤️';
+    document.getElementById('game-over-modal').style.display = 'none';
+
+    // Controls
+    canvas.addEventListener('mousemove', (e) => { player.x = e.clientX; });
+    canvas.addEventListener('touchmove', (e) => {
+      if (e.touches.length > 0) player.x = e.touches[0].clientX;
+    });
+
+    // Auto-fire laser bullets
+    setInterval(() => {
+      if (gameActive) {
+        bullets.push({ x: player.x, y: player.y - 20, radius: 4, speed: 10 });
+      }
+    }, 250);
+
+    // Spawn "Rajni" Zombies
+    clearInterval(spawnTimer);
+    spawnTimer = setInterval(() => {
+      if (gameActive && zombies.length < 6) {
+        zombies.push({
+          x: Math.random() * (canvas.width - 60) + 30,
+          y: -40,
+          speed: 1.5 + Math.random() * 1.5,
+          radius: 22,
+          text: "RAJNI 🧟"
+        });
+      }
+    }, 1200);
+
+    requestAnimationFrame(updateGame);
+  }
+
+  function resizeCanvas() {
+    if (!canvas) return;
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    if (player) player.y = canvas.height - 70;
+  }
+
+  function updateGame() {
+    if (!gameActive) return;
+
+    ctx.fillStyle = '#050508';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Draw Player Avatar
+    ctx.save();
+    ctx.fillStyle = player.color;
+    ctx.shadowColor = '#c084fc';
+    ctx.shadowBlur = 15;
+    ctx.beginPath();
+    ctx.arc(player.x, player.y, 20, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    // Player Crown / Label
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 12px "Segoe UI"';
+    ctx.textAlign = 'center';
+    ctx.fillText("BHUMI 👑", player.x, player.y + 35);
+
+    // Update & Draw Bullets
+    bullets.forEach((b, bIdx) => {
+      b.y -= b.speed;
+      ctx.fillStyle = '#38bdf8';
+      ctx.shadowColor = '#38bdf8';
+      ctx.shadowBlur = 8;
+      ctx.beginPath();
+      ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
+      ctx.fill();
+
+      if (b.y < -10) bullets.splice(bIdx, 1);
+    });
+
+    // Update & Draw Zombies
+    zombies.forEach((z, zIdx) => {
+      z.y += z.speed;
+
+      // Draw Zombie Blob
+      ctx.save();
+      ctx.fillStyle = '#4ade80';
+      ctx.shadowColor = '#4ade80';
+      ctx.shadowBlur = 10;
+      ctx.beginPath();
+      ctx.arc(z.x, z.y, z.radius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+
+      // Zombie Text Label
+      ctx.fillStyle = '#030014';
+      ctx.font = 'bold 11px "Segoe UI"';
+      ctx.textAlign = 'center';
+      ctx.fillText(z.text, z.x, z.y + 4);
+
+      // Bullet Collision Check
+      bullets.forEach((b, bIdx) => {
+        const dist = Math.hypot(b.x - z.x, b.y - z.y);
+        if (dist < z.radius + b.radius) {
+          // Create particle burst
+          for (let i = 0; i < 8; i++) {
+            particles3.push({
+              x: z.x, y: z.y,
+              vx: (Math.random() - 0.5) * 6,
+              vy: (Math.random() - 0.5) * 6,
+              alpha: 1
+            });
+          }
+
+          zombies.splice(zIdx, 1);
+          bullets.splice(bIdx, 1);
+          score++;
+          document.getElementById('score-val').innerText = score;
+
+          if (score >= 15) {
+            triggerWin();
+          }
+        }
+      });
+
+      // Bottom boundary hit (Lost HP)
+      if (z.y > canvas.height - 30) {
+        zombies.splice(zIdx, 1);
+        hp--;
+        document.getElementById('hp-val').innerText = '❤️'.repeat(Math.max(0, hp));
+
+        if (hp <= 0) {
+          triggerGameOver();
+        }
+      }
+    });
+
+    // Explosive Particles
+    particles3.forEach((p, pIdx) => {
+      p.x += p.vx;
+      p.y += p.vy;
+      p.alpha -= 0.04;
+
+      ctx.fillStyle = `rgba(74, 222, 128, ${Math.max(0, p.alpha)})`;
+      ctx.fillRect(p.x, p.y, 4, 4);
+
+      if (p.alpha <= 0) particles3.splice(pIdx, 1);
+    });
+
+    requestAnimationFrame(updateGame);
+  }
+
+  function triggerWin() {
+    gameActive = false;
+    document.getElementById('win-title').innerText = "VICTORY! 🏆";
+    document.getElementById('win-title').style.color = "#34d399";
+    document.getElementById('win-desc').innerText = "Bhumi successfully cleared all the Rajni Zombies! Undisputed Champion of the Universe ✨";
+    document.getElementById('game-over-modal').style.display = 'flex';
+  }
+
+  function triggerGameOver() {
+    gameActive = false;
+    document.getElementById('win-title').innerText = "GAME OVER 💀";
+    document.getElementById('win-title').style.color = "#f472b6";
+    document.getElementById('win-desc').innerText = "The Rajni Zombies overwhelmed the arena! Try again to protect Bhumi's galaxy.";
+    document.getElementById('game-over-modal').style.display = 'flex';
+  }
+
+  function restartGame() {
+    initStage3();
+  }
+</script>
+</body>
+</html>
