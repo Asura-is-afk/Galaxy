@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>Bhumi's Challenge ✨</title>
+  <title>Garima's Challenge ✨</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -264,7 +264,7 @@
       box-shadow: 0 0 50px rgba(192, 132, 252, 0.3);
     ">
       <h2 style="color: #f3e8ff; font-size: 1.4rem; margin-bottom: 12px;">FINAL VERIFICATION 🔍</h2>
-      <p style="color: #c084fc; font-size: 1rem; margin-bottom: 24px;">What is Bhumi?</p>
+      <p style="color: #c084fc; font-size: 1rem; margin-bottom: 24px;">What is Garima?</p>
       
       <div style="display: flex; gap: 15px; justify-content: center; margin-bottom: 20px;">
         <button id="btn-cute" class="puzzle-btn" style="
@@ -455,7 +455,7 @@
     }
   }
 </script>
-<!-- STAGE 3: RAJNI ZOMBIE SHOOTER CONTAINER -->
+<!-- STAGE 3: MULA ZOMBIE SHOOTER CONTAINER -->
 <div id="stage3" style="display: none; position: fixed; inset: 0; z-index: 10; background: #050508;">
   
   <!-- Score & Health UI Header -->
@@ -487,7 +487,7 @@
     ">
       <h1 id="win-title" style="color: #34d399; font-size: 2rem; margin-bottom: 10px;">VICTORY! 🏆</h1>
       <p id="win-desc" style="color: #f3e8ff; font-size: 1rem; margin-bottom: 24px; line-height: 1.5;">
-        Bhumi successfully defeated all the Rajni Zombies! Undisputed Champion of the Universe ✨
+        Garima successfully defeated all the Mula Zombies! Undisputed Champion of the Universe ✨
       </p>
       <button onclick="restartGame()" style="
         padding: 14px 32px; font-weight: bold; border-radius: 50px;
@@ -545,7 +545,7 @@
       }
     }, 250);
 
-    // Spawn "Rajni" Zombies
+    // Spawn "Mula" Zombies
     clearInterval(spawnTimer);
     spawnTimer = setInterval(() => {
       if (gameActive && zombies.length < 6) {
@@ -554,7 +554,7 @@
           y: -40,
           speed: 1.5 + Math.random() * 1.5,
           radius: 22,
-          text: "RAJNI 🧟"
+          text: "MULA 🧟"
         });
       }
     }, 1200);
@@ -589,7 +589,7 @@
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 12px "Segoe UI"';
     ctx.textAlign = 'center';
-    ctx.fillText("BHUMI 👑", player.x, player.y + 35);
+    ctx.fillText("GARIMA 👑", player.x, player.y + 35);
 
     // Update & Draw Bullets
     bullets.forEach((b, bIdx) => {
@@ -680,7 +680,7 @@
     gameActive = false;
     document.getElementById('win-title').innerText = "VICTORY! 🏆";
     document.getElementById('win-title').style.color = "#34d399";
-    document.getElementById('win-desc').innerText = "Bhumi successfully cleared all the Rajni Zombies! Undisputed Champion of the Universe ✨";
+    document.getElementById('win-desc').innerText = "Garima successfully cleared all the Mula Zombies! Undisputed Champion of the Universe ✨";
     document.getElementById('game-over-modal').style.display = 'flex';
   }
 
@@ -688,7 +688,7 @@
     gameActive = false;
     document.getElementById('win-title').innerText = "GAME OVER 💀";
     document.getElementById('win-title').style.color = "#f472b6";
-    document.getElementById('win-desc').innerText = "The Rajni Zombies overwhelmed the arena! Try again to protect Bhumi's galaxy.";
+    document.getElementById('win-desc').innerText = "The Mula Zombies overwhelmed the arena! Try again to protect Garima's galaxy.";
     document.getElementById('game-over-modal').style.display = 'flex';
   }
 
